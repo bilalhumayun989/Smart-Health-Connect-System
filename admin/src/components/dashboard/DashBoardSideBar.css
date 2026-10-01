@@ -1,17 +1,1 @@
-.sidebar-link {
-  padding: 0.6rem 1rem;
-  border-radius: 0.5rem;
-  color: white;
-  text-decoration: none;
-  transition: background-color 0.2s ease-in-out, transform 0.2s;
-}
-
-.sidebar-link:hover {
-  background-color: #2563eb; /* Tailwind's blue-700 */
-  transform: translateX(4px);
-}
-
-.active-link {
-  background-color: #1d4ed8; /* Tailwind's blue-600 */
-  font-weight: 600;
-}
+/* Sidebar styles — handled via Tailwind + index.css utilities */

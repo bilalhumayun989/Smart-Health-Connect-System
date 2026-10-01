@@ -5,10 +5,10 @@ import ShowCount from './ShowCount'
 
 export default function DashBoard() {
   return (
-    <div>
-      <DashBoardHero/>
-      <GraphCount/>
-      <ShowCount/>
+    <div className="flex flex-col gap-6">
+      <DashBoardHero />
+      <GraphCount />
+      <ShowCount />
     </div>
   )
 }

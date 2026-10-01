@@ -17,7 +17,7 @@ import Logout from '../logout/Logout'
 
 export default function MainDashBoard() {
   return (
-    <div className="flex min-h-screen bg-[#f8fafc]">
+    <div className="flex min-h-screen bg-white">
       <DashBoardSideBar />
       <div className="flex-1 flex flex-col min-h-screen overflow-x-hidden">
         <AdminNavbar />

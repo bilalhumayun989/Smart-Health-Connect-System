@@ -1,5 +1,5 @@
 import React from 'react'
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom'
 import UserNavbar from './components/navbar/UserNavbar'
 import HomeMain from './components/home/HomeMain'
 import DoctorSignup from './components/doctor/form/DoctorSignup'
@@ -13,28 +13,38 @@ import PatientChat from './components/patient/PatientChat'
 import ShowBlog from './components/blog/ShowBlog'
 import BlogDetail from './components/blog/BlogDetail'
 import Chatbot from './components/chatbot/Chatbot'
-export default function App() {
+
+const AUTH_ROUTES = ['/doctor-login', '/login', '/patient-signup', '/doctor-signup']
+
+function AppLayout() {
+  const location = useLocation()
+  const isAuthPage = AUTH_ROUTES.includes(location.pathname)
+
   return (
     <>
-      <BrowserRouter>
-      <UserNavbar/>
-      <Chatbot/>
-        <Routes>
-          <Route path='/' element={<HomeMain/>}></Route>
-          <Route path='/doctor-signup' element={<DoctorSignup/>}></Route>
-          <Route path='/doctor-login' element={<DoctorLogin/>}></Route>
-          <Route path='/show-doctor' element={<ShowDoctor/>}></Route>
-          <Route path='/login' element={<PatientLogin/>}></Route>
-          <Route path='/patient-signup' element={<PatientSignup/>}></Route>
-          <Route path='/dashboard/*' element={<MainDashBoard/>}></Route>
-          <Route path='/viewservices' element={<ViewServices/>}></Route>
-          <Route path='/patient-chat/:doctorId' element={<PatientChat/>} />
-          <Route path='/Blog' element={<ShowBlog/>}></Route>
-          <Route path="/blog-detail/:id" element={<BlogDetail/>} />
-
-
-        </Routes>
-      </BrowserRouter>
+      {!isAuthPage && <UserNavbar />}
+      {!isAuthPage && <Chatbot />}
+      <Routes>
+        <Route path='/' element={<HomeMain />} />
+        <Route path='/doctor-signup' element={<DoctorSignup />} />
+        <Route path='/doctor-login' element={<DoctorLogin />} />
+        <Route path='/show-doctor' element={<ShowDoctor />} />
+        <Route path='/login' element={<PatientLogin />} />
+        <Route path='/patient-signup' element={<PatientSignup />} />
+        <Route path='/dashboard/*' element={<MainDashBoard />} />
+        <Route path='/viewservices' element={<ViewServices />} />
+        <Route path='/patient-chat/:doctorId' element={<PatientChat />} />
+        <Route path='/Blog' element={<ShowBlog />} />
+        <Route path='/blog-detail/:id' element={<BlogDetail />} />
+      </Routes>
     </>
+  )
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AppLayout />
+    </BrowserRouter>
   )
 }

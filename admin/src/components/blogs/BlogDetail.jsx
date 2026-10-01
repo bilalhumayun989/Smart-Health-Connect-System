@@ -15,7 +15,7 @@ export default function BlogDetail() {
   useEffect(() => {
     const fetchBlog = async () => {
       try {
-        const res = await axios.get(`http://localhost:8000/api/blog/${id}`);
+        const res = await axios.get(`http://192.168.1.8:8000/api/blog/${id}`);
         setBlog(res.data);
 
         const descriptionText = res.data.description;
@@ -117,7 +117,7 @@ export default function BlogDetail() {
             className="rounded-[3rem] overflow-hidden shadow-2xl border-8 border-white group"
           >
             <img
-              src={`http://localhost:8000/uploads/blogs/${blog.blogImage}`}
+              src={`http://192.168.1.8:8000/uploads/blogs/${blog.blogImage}`}
               alt={blog.title}
               className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-[2s]"
             />
@@ -143,7 +143,7 @@ export default function BlogDetail() {
             className="rounded-[3rem] overflow-hidden shadow-2xl border-8 border-white group p-4 bg-gray-50"
           >
             <img
-              src={`http://localhost:8000/uploads/blogs/${blog.descriptionImage}`}
+              src={`http://192.168.1.8:8000/uploads/blogs/${blog.descriptionImage}`}
               alt="Supplementary visual"
               className="w-full h-auto object-cover rounded-[2rem] group-hover:scale-105 transition-transform duration-[2s]"
             />

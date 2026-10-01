@@ -34,7 +34,7 @@ export default function InsertBlog() {
     data.append('descriptionImage', formData.descriptionImage);
 
     try {
-      await axios.post('http://localhost:8000/api/blog/insert-blog', data);
+      await axios.post('http://192.168.1.8:8000/api/blog/insert-blog', data);
       alert('Publication established successfully!');
       navigate('/show-blog');
     } catch (err) {

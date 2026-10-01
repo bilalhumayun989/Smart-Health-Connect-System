@@ -1,222 +1,237 @@
-import React, { useEffect, useState, Suspense } from "react";
-import { Doughnut, Bar } from "react-chartjs-2";
-import { Canvas } from "@react-three/fiber";
-import { Float, MeshDistortMaterial, Sphere, PerspectiveCamera } from "@react-three/drei";
+import React, { useState, useEffect } from "react";
+import { Line } from "react-chartjs-2";
 import axios from "axios";
 import { motion } from "framer-motion";
 import {
   Chart as ChartJS,
-  ArcElement,
-  Tooltip,
-  Legend,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  PointElement,
-  LineElement,
+  CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip, Legend,
 } from "chart.js";
+import { FaArrowUp } from "react-icons/fa";
 
-ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, PointElement, LineElement);
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip, Legend);
 
-function Scene3D() {
+/* ── Custom dot area chart (Financial Activity style) ── */
+const DotAreaChart = ({ data }) => {
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const max = Math.max(...data, 1);
+  const height = 120;
+  const width = 280;
+  const padX = 20;
+  const padY = 14;
+  const usableW = width - padX * 2;
+  const usableH = height - padY * 2;
+
+  const pts = data.map((v, i) => ({
+    x: padX + (i / (data.length - 1)) * usableW,
+    y: padY + usableH - (v / max) * usableH,
+    v,
+  }));
+
+  const pathD = pts.reduce((d, p, i) => {
+    if (i === 0) return `M ${p.x} ${p.y}`;
+    const prev = pts[i - 1];
+    const cpX = (prev.x + p.x) / 2;
+    return `${d} C ${cpX} ${prev.y} ${cpX} ${p.y} ${p.x} ${p.y}`;
+  }, '');
+
+  const areaD = `${pathD} L ${pts[pts.length - 1].x} ${height} L ${pts[0].x} ${height} Z`;
+
+  const peak = pts.reduce((a, b) => (b.v > a.v ? b : a));
+
   return (
-    <>
-      <PerspectiveCamera makeDefault position={[0, 0, 5]} />
-      <ambientLight intensity={1.5} />
-      <pointLight position={[10, 10, 10]} intensity={2} color="#123499" />
-      <pointLight position={[-10, -10, -10]} intensity={2} color="#5eaf73" />
-      <Float speed={2} rotationIntensity={1.5} floatIntensity={2}>
-        <Sphere args={[1, 64, 64]} scale={1.8}>
-          <MeshDistortMaterial
-            color="#0a2472"
-            speed={4}
-            distort={0.4}
-            radius={1}
-          />
-        </Sphere>
-      </Float>
-    </>
+    <svg viewBox={`0 0 ${width} ${height}`} className="w-full" style={{ height: 130 }}>
+      <defs>
+        <linearGradient id="actGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#0f766e" stopOpacity="0.25" />
+          <stop offset="100%" stopColor="#0f766e" stopOpacity="0" />
+        </linearGradient>
+        {/* hatching pattern */}
+        <pattern id="hatch" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)">
+          <line x1="0" y1="0" x2="0" y2="6" stroke="#0f766e" strokeWidth="1" strokeOpacity="0.18" />
+        </pattern>
+      </defs>
+      {/* hatched fill */}
+      <path d={areaD} fill="url(#hatch)" />
+      {/* gradient fill */}
+      <path d={areaD} fill="url(#actGrad)" />
+      {/* line */}
+      <path d={pathD} fill="none" stroke="#0f766e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      {/* dots */}
+      {pts.map((p, i) => (
+        <g key={i}>
+          <circle cx={p.x} cy={p.y} r="3.5" fill="#fff" stroke="#0f766e" strokeWidth="2" />
+          <circle cx={p.x} cy={p.y} r="1.5" fill="#0f766e" />
+        </g>
+      ))}
+      {/* peak tooltip */}
+      <g>
+        <rect x={peak.x - 22} y={peak.y - 28} width={44} height={20} rx={6} fill="#0f766e" />
+        <text x={peak.x} y={peak.y - 14} textAnchor="middle" fill="#fff" fontSize="10" fontWeight="600">
+          {peak.v}
+        </text>
+      </g>
+      {/* day labels */}
+      {pts.map((p, i) => (
+        <text key={i} x={p.x} y={height} textAnchor="middle" fill="#94a3b8" fontSize="9">
+          {days[i]}
+        </text>
+      ))}
+    </svg>
   );
-}
+};
 
 export default function ShowCount() {
   const [stats, setStats] = useState({
-    totalAppointments: 0,
-    totalPatients: 0,
-    totalDoctors: 0,
-    revenue: 0,
-    weeklyAppointments: [0, 0, 0, 0, 0, 0, 0]
+    totalAppointments: 0, totalPatients: 0, totalDoctors: 0,
+    weeklyAppointments: [0, 0, 0, 0, 0, 0, 0],
   });
 
   useEffect(() => {
-    const fetchData = async () => {
+    (async () => {
       try {
-        const [patientsRes, doctorsRes, appointmentsRes] = await Promise.all([
-          axios.get("http://localhost:8000/api/patients/all"),
-          axios.get("http://localhost:8000/api/doctor/all-doctor"),
-          axios.get("http://localhost:8000/api/appointment/all"),
+        const [pR, dR, aR] = await Promise.all([
+          axios.get("http://192.168.1.8:8000/api/patients/all"),
+          axios.get("http://192.168.1.8:8000/api/doctor/all-doctor"),
+          axios.get("http://192.168.1.8:8000/api/appointment/all"),
         ]);
-
-        const patients = patientsRes.data || [];
-        const doctors = doctorsRes.data || [];
-        const appointments = appointmentsRes.data || [];
-
-        const salesByDay = [0, 0, 0, 0, 0, 0, 0];
-        appointments.forEach((appt) => {
-          if (!appt.createdAt) return;
-          const date = new Date(appt.createdAt);
-          const day = date.getDay();
-          salesByDay[day] += 1; // Count per day
-        });
-
+        const patients = pR.data || [], doctors = dR.data || [], appointments = aR.data || [];
+        const byDay = [0, 0, 0, 0, 0, 0, 0];
+        appointments.forEach(a => { if (a.createdAt) byDay[new Date(a.createdAt).getDay()] += 1; });
         setStats({
-          totalPatients: patients.length,
-          totalDoctors: doctors.length,
+          totalPatients: patients.length, totalDoctors: doctors.length,
           totalAppointments: appointments.length,
-          revenue: appointments.length * 500, // Example revenue
-          weeklyAppointments: salesByDay
+          weeklyAppointments: byDay,
         });
-      } catch (error) {
-        console.error("Error fetching dashboard data:", error);
-      }
-    };
-
-    fetchData();
+      } catch (e) { console.error(e); }
+    })();
   }, []);
 
-  const doughnutData = {
-    labels: ["Revenue Earned", "Target"],
-    datasets: [
-      {
-        data: [stats.revenue, Math.max(0, 100000 - stats.revenue)],
-        backgroundColor: ["#123499", "#f1f5f9"],
-        borderWidth: 0,
-        hoverOffset: 10,
-        borderRadius: 20,
-      },
-    ],
+  /* ── Line (patient growth) ── */
+  const lineData = {
+    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+    datasets: [{
+      label: 'Patients',
+      data: [3, 5, 7, 9, 12, 14, stats.totalPatients || 14],
+      borderColor: '#0f766e',
+      backgroundColor: 'rgba(15,118,110,0.08)',
+      fill: true, tension: 0.45,
+      pointBackgroundColor: '#0f766e',
+      pointRadius: 4, pointHoverRadius: 6, borderWidth: 2,
+    }],
   };
-
-  const doughnutOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    cutout: "85%",
-    plugins: {
-      legend: { display: false },
-      tooltip: { enabled: true },
-    },
-  };
-
-  const barData = {
-    labels: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
-    datasets: [
-      {
-        label: "Appointments",
-        data: stats.weeklyAppointments,
-        backgroundColor: "#5eaf73",
-        borderRadius: 12,
-        barThickness: 24,
-      },
-    ],
-  };
-
-  const barOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { display: false },
-    },
+  const lineOptions = {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
     scales: {
-      x: { grid: { display: false }, ticks: { color: "#94a3b8", font: { weight: 'bold' } } },
-      y: { beginAtZero: true, grid: { color: "#f1f5f9" }, ticks: { color: "#94a3b8" } },
+      x: { grid: { display: false }, ticks: { color: "#94a3b8", font: { size: 10 } } },
+      y: { beginAtZero: true, grid: { color: "#f8fafc" }, ticks: { color: "#94a3b8", font: { size: 10 } } },
     },
   };
 
   return (
-    <div className="w-full flex flex-col gap-10">
-      {/* Welcome Card */}
-      <motion.div
-        initial={{ opacity: 0, x: -50 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.8, delay: 0.5 }}
-        className="glass-card rounded-[3rem] p-10 flex flex-col lg:flex-row items-center justify-between gap-10 overflow-hidden relative"
-      >
-        <div className="absolute top-0 right-0 w-1/2 h-full hidden lg:block pointer-events-none">
-          <Canvas>
-            <Suspense fallback={null}>
-              <Scene3D />
-            </Suspense>
-          </Canvas>
-        </div>
+    <div className="w-full flex flex-col gap-6 pb-6">
 
-        <div className="flex-1 z-10">
-          <div className="flex items-center gap-6 mb-8 text-center lg:text-left">
-            <img
-              src="https://i.pravatar.cc/150?img=12"
-              alt="avatar"
-              className="w-24 h-24 rounded-[2rem] border-4 border-white shadow-2xl"
-            />
-            <div>
-              <h2 className="text-3xl font-black text-[#00072d] mb-1">Welcome Back, Mathew!</h2>
-              <p className="text-[#5eaf73] font-bold text-sm uppercase tracking-[0.2em]">Dashboard Control Panel</p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {[
-              { label: 'Patients', val: stats.totalPatients, color: '#123499' },
-              { label: 'Doctors', val: stats.totalDoctors, color: '#0a2472' },
-              { label: 'Visits', val: stats.totalAppointments, color: '#5eaf73' },
-              { label: 'Revenue', val: `₹${stats.revenue.toLocaleString()}`, color: '#123499' },
-            ].map((item, idx) => (
-              <div key={idx} className="bg-[#f8fafc] rounded-[1.5rem] p-5 shadow-sm border border-white">
-                <h4 className="text-xl font-black text-[#00072d] mb-1">{item.val}</h4>
-                <p className="text-gray-400 text-xs font-bold uppercase tracking-widest">{item.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Expense and Sales Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+      {/* ── 2 Charts row (Revenue Goal moved to GraphCount right column) ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">        {/* ── Card 2: Weekly Appointments (Dot Area / Financial Activity style) ── */}
         <motion.div
-          initial={{ opacity: 0, y: 50 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.6 }}
-          className="glass-card rounded-[3rem] p-10 flex flex-col gap-6"
+          transition={{ duration: 0.5, delay: 0.52 }}
+          className="bg-white rounded-2xl border border-[#e2f4f2] p-6 flex flex-col gap-4"
+          style={{ boxShadow: '0 4px 24px rgba(15,118,110,0.08)' }}
         >
-          <div className="flex justify-between items-start">
+          {/* Header */}
+          <div className="flex items-start justify-between">
             <div>
-              <h6 className="text-[10px] uppercase tracking-widest text-gray-400 font-black mb-1">Target Achievement</h6>
-              <h5 className="text-2xl font-black text-[#00072d]">Revenue Growth</h5>
+              <p className="text-[10px] uppercase tracking-widest text-[#0f766e] mb-0.5">Schedule</p>
+              <h5 className="text-sm font-semibold text-[#0f172a]">Weekly Appointments</h5>
+              <p className="text-xs text-gray-400 mt-0.5">By day of week</p>
             </div>
-            <div className="bg-[#5eaf73]/10 text-[#5eaf73] px-3 py-1 rounded-full text-[10px] font-black uppercase">Active</div>
+            <span className="text-[10px] text-gray-400 bg-[#f8fffe] border border-[#e2f4f2] rounded-full px-2 py-0.5">Sun–Sat</span>
           </div>
-          <div className="relative h-[250px] flex items-center justify-center">
-            <Doughnut data={doughnutData} options={doughnutOptions} />
-            <div className="absolute flex flex-col items-center">
-              <span className="text-3xl font-black text-[#00072d]">{Math.round((stats.revenue / 100000) * 100)}%</span>
-              <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest text-center px-4 leading-tight">Monthly<br />Goal</span>
-            </div>
+
+          {/* Big number */}
+          <div className="flex items-end gap-2">
+            <span className="text-3xl font-semibold text-[#0f172a]">
+              {stats.weeklyAppointments.reduce((a, b) => a + b, 0)}
+            </span>
+            <span className="flex items-center gap-1 text-xs text-[#0f766e] bg-[#e8f8f6] rounded-full px-2 py-0.5 mb-1 font-medium">
+              <FaArrowUp size={8} /> vs last week
+            </span>
+          </div>
+
+          {/* Custom dot area chart */}
+          <div className="flex-1">
+            <DotAreaChart data={stats.weeklyAppointments} />
+          </div>
+
+          {/* Day breakdown mini pills */}
+          <div className="flex gap-1 flex-wrap">
+            {['S','M','T','W','T','F','S'].map((d, i) => {
+              const v = stats.weeklyAppointments[i];
+              const max = Math.max(...stats.weeklyAppointments, 1);
+              const isMax = v === max && max > 0;
+              return (
+                <div key={i} className="flex flex-col items-center gap-1 flex-1">
+                  <div
+                    className="w-full rounded-md text-center text-[9px] font-medium py-0.5"
+                    style={{
+                      backgroundColor: isMax ? '#0f766e' : v > 0 ? '#e8f8f6' : '#f8fafc',
+                      color: isMax ? '#fff' : v > 0 ? '#0f766e' : '#cbd5e1',
+                    }}
+                  >
+                    {v}
+                  </div>
+                  <span className="text-[9px] text-gray-400">{d}</span>
+                </div>
+              );
+            })}
           </div>
         </motion.div>
 
+        {/* ── Card 3: Patient Growth (Line) ── */}
         <motion.div
-          initial={{ opacity: 0, y: 50 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.7 }}
-          className="glass-card rounded-[3rem] p-10 flex flex-col gap-6"
+          transition={{ duration: 0.5, delay: 0.59 }}
+          className="bg-white rounded-2xl border border-[#e2f4f2] p-6 flex flex-col gap-4"
+          style={{ boxShadow: '0 4px 24px rgba(15,118,110,0.08)' }}
         >
-          <div className="flex justify-between items-start">
+          {/* Header */}
+          <div className="flex items-start justify-between">
             <div>
-              <h6 className="text-[10px] uppercase tracking-widest text-gray-400 font-black mb-1">Clinic Performance</h6>
-              <h5 className="text-2xl font-black text-[#00072d]">Weekly Workflow</h5>
+              <p className="text-[10px] uppercase tracking-widest text-[#0f766e] mb-0.5">Growth</p>
+              <h5 className="text-sm font-semibold text-[#0f172a]">Patient Growth</h5>
+              <p className="text-xs text-gray-400 mt-0.5">Jan – Jul trend</p>
             </div>
-            <div className="text-gray-400 text-xs font-bold">Mon - Sun</div>
+            <span className="flex items-center gap-1 text-[10px] text-[#0f766e] bg-[#e8f8f6] px-2 py-0.5 rounded-full font-medium">
+              <FaArrowUp size={7} /> +12.5%
+            </span>
           </div>
-          <div className="h-[250px]">
-            <Bar data={barData} options={barOptions} />
+
+          {/* Big number */}
+          <div className="flex items-end gap-2">
+            <span className="text-3xl font-semibold text-[#0f172a]">{stats.totalPatients}</span>
+            <span className="text-xs text-gray-400 mb-1">total patients</span>
+          </div>
+
+          {/* Line chart */}
+          <div className="h-[170px]">
+            <Line data={lineData} options={lineOptions} />
+          </div>
+
+          {/* Month comparison */}
+          <div className="flex items-center justify-between text-[10px]">
+            {['Jan','Feb','Mar','Apr','May','Jun','Jul'].map((m, i) => {
+              const vals = [3, 5, 7, 9, 12, 14, stats.totalPatients || 14];
+              const isLast = i === vals.length - 1;
+              return (
+                <div key={m} className={`text-center ${isLast ? 'text-[#0f766e] font-semibold' : 'text-gray-400'}`}>
+                  <div>{m}</div>
+                  <div className={`w-1 h-1 rounded-full mx-auto mt-0.5 ${isLast ? 'bg-[#0f766e]' : 'bg-gray-200'}`} />
+                </div>
+              );
+            })}
           </div>
         </motion.div>
       </div>

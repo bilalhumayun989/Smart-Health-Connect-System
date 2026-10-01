@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
-import { FaLock, FaSave, FaCheckCircle, FaExclamationTriangle, FaShieldAlt } from 'react-icons/fa';
+import { FaLock, FaSave, FaCheckCircle, FaExclamationTriangle, FaShieldAlt, FaKey } from 'react-icons/fa';
 
 export default function SecurityPolicy() {
   const [policy, setPolicy] = useState('');
@@ -9,100 +9,116 @@ export default function SecurityPolicy() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    axios.get('http://localhost:8000/api/security-policy')
-      .then(res => {
-        setPolicy(res.data?.policy || '');
-      })
-      .catch(err => console.error(err));
+    axios.get('http://192.168.1.8:8000/api/security-policy')
+      .then(r => setPolicy(r.data?.policy || ''))
+      .catch(e => console.error(e));
   }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!policy.trim()) return setStatus({ type: 'error', message: "Verification failed: Security field cannot be empty." });
-
+    if (!policy.trim()) return setStatus({ type: 'error', message: 'Security policy cannot be empty.' });
     setLoading(true);
     try {
-      await axios.post('http://localhost:8000/api/security-policy', { policy });
-      setStatus({ type: 'success', message: 'Encryption protocols updated and secured.' });
+      await axios.post('http://192.168.1.8:8000/api/security-policy', { policy });
+      setStatus({ type: 'success', message: 'Security policy updated and secured.' });
       setTimeout(() => setStatus({ type: '', message: '' }), 5000);
-    } catch (err) {
-      setStatus({ type: 'error', message: 'Synchronization failed: Security server is unreachable.' });
+    } catch {
+      setStatus({ type: 'error', message: 'Update failed. Server unreachable.' });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex flex-col gap-10">
+    <div className="flex flex-col gap-8">
+
+      {/* ── Header ── */}
       <motion.div
-        initial={{ opacity: 0, y: -20 }}
+        initial={{ opacity: 0, y: -18 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="flex flex-col md:flex-row md:items-center justify-between gap-6"
+        transition={{ duration: 0.5 }}
+        className="flex flex-col md:flex-row md:items-center justify-between gap-5"
       >
         <div>
-          <h2 className="text-4xl font-black text-[#00072d] tracking-tight mb-2">Security Protocol</h2>
-          <p className="text-gray-400 font-medium">Configure core operational security and encryption policies.</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#0f766e] mb-1">Security</p>
+          <h2 className="text-3xl font-black text-[#0f172a] tracking-tight">Security Policy</h2>
+          <p className="text-gray-400 text-sm mt-1">Configure operational security and encryption policies.</p>
         </div>
-        <div className="glass-card px-8 py-5 rounded-[2rem] flex items-center gap-4 border-l-4 border-[#0a2472]">
-          <div className="text-right">
-            <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Encryption</p>
-            <p className="text-xl font-black text-[#0a2472] leading-none text-center">AES-256</p>
-          </div>
-          <div className="w-12 h-12 bg-[#0a2472]/10 text-[#0a2472] rounded-2xl flex items-center justify-center">
-            <FaLock size={18} />
-          </div>
+
+        <div className="flex items-center gap-3">
+          {[
+            { icon: FaLock, label: 'Encryption', val: 'AES-256' },
+            { icon: FaKey, label: 'Auth', val: 'JWT' },
+          ].map(({ icon: Icon, label, val }, i) => (
+            <div key={i} className="flex items-center gap-2 bg-[#e8f8f6] border border-[#0f766e]/15 rounded-xl px-4 py-2.5">
+              <Icon className="text-[#0f766e]" size={13} />
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 leading-none">{label}</p>
+                <p className="text-xs font-black text-[#0f766e] leading-tight">{val}</p>
+              </div>
+            </div>
+          ))}
         </div>
       </motion.div>
 
+      {/* ── Editor Card ── */}
       <motion.div
-        initial={{ opacity: 0, y: 30 }}
+        initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7, delay: 0.2 }}
-        className="glass-card rounded-[3rem] p-10 max-w-5xl mx-auto w-full border-t-[10px] border-[#0a2472]"
+        transition={{ duration: 0.55, delay: 0.15 }}
+        className="bg-white rounded-2xl border border-[#e2f4f2] overflow-hidden"
+        style={{ boxShadow: '0 2px 20px rgba(15,118,110,0.07)' }}
       >
-        <form onSubmit={handleSubmit} className="space-y-8">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between px-2">
-              <label className="text-[10px] font-black text-[#0a2472] uppercase tracking-[0.2em]">Security Directive Content</label>
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400 bg-gray-50 px-3 py-1 rounded-full uppercase">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#123499] animate-pulse"></span> Protected
-                </div>
-              </div>
+        {/* Card header */}
+        <div className="px-7 py-4 bg-[#f8fffe] border-b border-[#e2f4f2] flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-[#0f766e] flex items-center justify-center">
+              <FaShieldAlt size={12} className="text-white" />
             </div>
-            <textarea
-              value={policy}
-              onChange={(e) => setPolicy(e.target.value)}
-              rows={15}
-              className="w-full bg-[#f8fafc] border-2 border-transparent focus:border-[#0a2472]/20 focus:bg-white rounded-[2.5rem] p-10 outline-none text-sm font-bold text-[#051650] transition-all leading-relaxed resize-none custom-scrollbar"
-              placeholder="Define high-level security directives and operational protocols..."
-            />
+            <div>
+              <p className="text-sm font-black text-[#0f172a]">Security Directive</p>
+              <p className="text-[10px] text-gray-400 font-semibold">Edit and commit operational security protocols</p>
+            </div>
           </div>
+          <div className="flex items-center gap-1.5 text-[10px] font-bold text-[#0f766e] bg-[#e8f8f6] px-3 py-1 rounded-full uppercase tracking-wider">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#0f766e] animate-pulse" />
+            Protected
+          </div>
+        </div>
 
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              disabled={loading}
+        <form onSubmit={handleSubmit} className="p-7 space-y-6">
+          <textarea
+            rows={16}
+            value={policy}
+            onChange={e => setPolicy(e.target.value)}
+            placeholder="Define high-level security directives and operational protocols…"
+            className="w-full bg-[#f8fffe] border border-[#e2f4f2] focus:border-[#0f766e] focus:ring-2 focus:ring-[#0f766e]/10 rounded-2xl p-6 outline-none text-sm text-[#0f172a] leading-relaxed resize-none transition-all font-medium placeholder-gray-300"
+          />
+
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <button
               type="submit"
-              className="w-full md:w-auto px-10 py-4 bg-[#0a2472] text-white font-black text-xs uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-[#0a2472]/20 hover:bg-[#00072d] transition-all flex items-center justify-center gap-3 disabled:opacity-70"
+              disabled={loading}
+              className="flex items-center gap-2.5 px-8 py-3 bg-[#0f766e] hover:bg-[#0d9488] text-white font-black text-xs uppercase tracking-widest rounded-xl transition-all shadow-sm shadow-[#0f766e]/20 disabled:opacity-60"
             >
-              {loading ? (
-                <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-              ) : (
-                <><FaShieldAlt size={14} /> Commit Changes</>
-              )}
-            </motion.button>
+              {loading
+                ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                : <><FaSave size={13} /> Commit Changes</>
+              }
+            </button>
 
             {status.message && (
               <motion.div
-                initial={{ opacity: 0, x: 20 }}
+                initial={{ opacity: 0, x: 16 }}
                 animate={{ opacity: 1, x: 0 }}
-                className={`flex items-center gap-3 px-6 py-3 rounded-2xl border ${status.type === 'success' ? 'bg-[#5eaf73]/10 border-[#5eaf73]/20 text-[#5eaf73]' : 'bg-red-50 border-red-100 text-red-500'}`}
+                className={`flex items-center gap-2.5 px-5 py-2.5 rounded-xl border text-xs font-bold ${
+                  status.type === 'success'
+                    ? 'bg-[#e8f8f6] border-[#0f766e]/20 text-[#0f766e]'
+                    : 'bg-red-50 border-red-200 text-red-500'
+                }`}
               >
-                {status.type === 'success' ? <FaCheckCircle /> : <FaExclamationTriangle />}
-                <span className="text-[11px] font-black uppercase tracking-wider">{status.message}</span>
+                {status.type === 'success' ? <FaCheckCircle size={13} /> : <FaExclamationTriangle size={13} />}
+                {status.message}
               </motion.div>
             )}
           </div>

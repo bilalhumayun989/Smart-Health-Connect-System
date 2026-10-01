@@ -1,14 +1,17 @@
 @import "tailwindcss";
 
 :root {
-  --primary-dark: #00072d;
-  --primary-navy: #051650;
-  --secondary-blue: #0a2472;
-  --accent-blue: #123499;
-  --highlight-green: #5eaf73;
+  --primary-dark: #0f172a;
+  --primary-teal: #0f766e;
+  --secondary-teal: #0d9488;
+  --accent-teal: #14b8a6;
+  --highlight-mint: #99f6e4;
+  --sidebar-bg: #f0faf9;
+  --sidebar-active-bg: #d0f2ee;
+  --sidebar-active-text: #0f766e;
   --text-white: #ffffff;
-  --text-gray: #94a3b8;
-  --bg-main: #f8fafc;
+  --text-gray: #64748b;
+  --bg-main: #ffffff;
 }
 
 body {
@@ -20,23 +23,46 @@ body {
   color: var(--primary-dark);
 }
 
+/* Clean white card with soft teal shadow */
 .glass-card {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 8px 32px 0 rgba(0, 7, 45, 0.1);
+  background: #ffffff;
+  border: 1px solid #e2f4f2;
+  box-shadow: 0 4px 32px 0 rgba(15, 118, 110, 0.08);
+  border-radius: 1.5rem;
 }
 
+/* Light teal sidebar */
 .sidebar-glass {
-  background: rgba(5, 22, 80, 0.95);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(180deg, #ffffff 0%, #f9fefe 50%, #f4fdfc 100%);
+  border-right: 1px solid #e8f6f5;
+  box-shadow: 4px 0 20px rgba(15, 118, 110, 0.04);
 }
 
 .gradient-text {
-  background: linear-gradient(135deg, var(--accent-blue), var(--highlight-green));
+  background: linear-gradient(135deg, #0f766e, #14b8a6);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+
+/* Hide scrollbar */
+.sidebar-no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.sidebar-no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Active nav glow — teal on light bg */
+.nav-active-glow {
+  box-shadow: 0 2px 16px rgba(15, 118, 110, 0.18);
+}
+
+/* Stat card hover lift */
+.stat-card-hover {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.stat-card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(15, 118, 110, 0.15);
 }

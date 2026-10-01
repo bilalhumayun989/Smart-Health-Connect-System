@@ -1,144 +1,182 @@
 import React, { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import { FaCalendarCheck, FaClock, FaUserMd, FaUserCircle, FaCreditCard, FaEllipsisV, FaEye, FaTrash } from 'react-icons/fa';
+import {
+  FaCalendarCheck, FaClock, FaUserMd, FaUserCircle,
+  FaCreditCard, FaEye, FaTrash, FaSearch, FaCalendarAlt,
+} from 'react-icons/fa';
+
+const API_URL = import.meta.env.VITE_API_URL;
+
+const statusBadge = (method) => (
+  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#e8f8f6] text-[#0f766e]">
+    <FaCreditCard size={8} />
+    {method}
+  </span>
+);
 
 export default function ShowAppointments() {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
-    fetch('http://localhost:8000/api/appointment/all')
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to fetch');
-        return res.json();
-      })
-      .then(data => {
-        setAppointments(data);
-        setLoading(false);
-      })
-      .catch(err => {
-        setError(err.message);
-        setLoading(false);
-      });
+    fetch(`${API_URL}/api/appointment/all`)
+      .then(r => { if (!r.ok) throw new Error('Failed'); return r.json(); })
+      .then(d => { setAppointments(d); setLoading(false); })
+      .catch(e => { setError(e.message); setLoading(false); });
   }, []);
 
+  const filtered = appointments.filter(a =>
+    `${a.doctorName} ${a.patientName} ${a.patientEmail}`.toLowerCase().includes(search.toLowerCase())
+  );
+
   if (loading) return (
-    <div className="flex items-center justify-center p-20">
-      <motion.div
-        animate={{ rotate: 360 }}
-        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-        className="w-12 h-12 border-4 border-[#123499]/20 border-t-[#123499] rounded-full"
-      />
+    <div className="flex items-center justify-center p-24">
+      <div className="w-10 h-10 border-4 border-[#0f766e]/20 border-t-[#0f766e] rounded-full animate-spin" />
     </div>
   );
 
   if (error) return (
-    <div className="glass-card p-10 rounded-[2rem] text-center">
-      <p className="text-red-500 font-bold mb-4">Verification Error: {error}</p>
-      <button onClick={() => window.location.reload()} className="px-6 py-2 bg-[#123499] text-white rounded-xl text-xs font-black uppercase tracking-widest">Retry Connection</button>
+    <div className="bg-white border border-[#e2f4f2] rounded-2xl p-12 text-center">
+      <p className="text-red-400 font-bold mb-4 text-sm">{error}</p>
+      <button onClick={() => window.location.reload()}
+        className="px-6 py-2.5 bg-[#0f766e] text-white rounded-xl text-xs font-black uppercase tracking-widest">
+        Retry
+      </button>
     </div>
   );
 
   return (
-    <div className="flex flex-col gap-10">
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="flex flex-col md:flex-row md:items-center justify-between gap-6"
-      >
-        <div>
-          <h2 className="text-4xl font-black text-[#00072d] tracking-tight mb-2">Appointments</h2>
-          <p className="text-gray-400 font-medium">Manage and schedule clinical consultations efficiently.</p>
-        </div>
-        <div className="flex items-center gap-4">
-          <button className="px-6 py-3 bg-[#123499] text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg shadow-[#123499]/20 hover:scale-105 transition-transform">Schedule New</button>
-        </div>
-      </motion.div>
+    <div className="flex flex-col gap-8">
 
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7, delay: 0.2 }}
-        className="glass-card rounded-[3rem] overflow-hidden"
+      {/* Header — no animation */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#0f766e] mb-1">Scheduling</p>
+          <h2 className="text-3xl font-black text-[#0f172a] tracking-tight">Appointments</h2>
+          <p className="text-gray-400 text-sm mt-1">Manage and schedule clinical consultations efficiently.</p>
+        </div>
+
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-2 bg-white border border-[#e2f4f2] rounded-xl px-4 py-2.5 w-60 focus-within:border-[#0f766e] focus-within:ring-2 focus-within:ring-[#0f766e]/10 transition-all">
+            <FaSearch className="text-gray-300 text-sm flex-shrink-0" />
+            <input
+              type="text"
+              placeholder="Search appointments…"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="bg-transparent outline-none text-sm text-gray-700 placeholder-gray-300 w-full"
+            />
+          </div>
+          <div className="flex items-center gap-2 bg-[#e8f8f6] border border-[#0f766e]/15 rounded-xl px-4 py-2.5">
+            <FaCalendarAlt className="text-[#0f766e]" size={13} />
+            <span className="text-sm font-black text-[#0f766e]">{appointments.length} Total</span>
+          </div>
+          <button className="px-5 py-2.5 bg-[#0f766e] text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-[#0d9488] transition-colors shadow-sm shadow-[#0f766e]/20">
+            + New
+          </button>
+        </div>
+      </div>
+
+      {/* Table — no row animations */}
+      <div
+        className="bg-white rounded-2xl border border-[#e2f4f2] overflow-hidden"
+        style={{ boxShadow: '0 2px 20px rgba(15,118,110,0.07)' }}
       >
+        {/* Table header bar */}
+        <div className="px-6 py-4 bg-[#f8fffe] border-b border-[#e2f4f2] flex items-center gap-3">
+          <FaCalendarCheck className="text-[#0f766e]" size={14} />
+          <span className="text-xs font-black text-[#0f172a] uppercase tracking-wider">
+            All Appointments ({filtered.length})
+          </span>
+        </div>
+
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left">
             <thead>
-              <tr className="border-b border-gray-100 bg-[#f8fafc]/50">
-                <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">Doctor Information</th>
-                <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">Schedule</th>
-                <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">Patient Details</th>
-                <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">Payment</th>
-                <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Actions</th>
+              <tr className="border-b border-[#f0faf9]">
+                {['Doctor', 'Schedule', 'Patient', 'Payment', 'Actions'].map(h => (
+                  <th key={h} className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">
+                    {h}
+                  </th>
+                ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
-              {appointments.map((app, index) => (
-                <motion.tr
+            <tbody className="divide-y divide-[#f8fffe]">
+              {filtered.map((app) => (
+                <tr
                   key={app._id}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: index * 0.05 }}
-                  className="hover:bg-[#f8fafc] transition-colors group cursor-default"
+                  className="hover:bg-[#f8fffe] transition-colors"
                 >
-                  <td className="px-8 py-6">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-[#123499]/10 text-[#123499] flex items-center justify-center">
-                        <FaUserMd size={16} />
-                      </div>
-                      <div>
-                        <p className="text-sm font-black text-[#00072d]">{app.doctorName}</p>
-                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Assigned Doctor</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-8 py-6">
-                    <div className="flex flex-col gap-1.5">
-                      <div className="flex items-center gap-2 text-gray-600">
-                        <FaCalendarCheck size={12} className="text-[#5eaf73]" />
-                        <span className="text-xs font-bold">{app.appointmentDate}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-gray-400">
-                        <FaClock size={12} />
-                        <span className="text-[11px] font-medium">{app.appointmentTime}</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-8 py-6">
+                  {/* Doctor */}
+                  <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <FaUserCircle size={18} className="text-gray-200 group-hover:text-[#0a2472] transition-colors" />
+                      <div className="w-9 h-9 rounded-xl bg-[#e8f8f6] text-[#0f766e] flex items-center justify-center flex-shrink-0">
+                        <FaUserMd size={14} />
+                      </div>
                       <div>
-                        <p className="text-xs font-bold text-[#051650]">{app.patientName}</p>
-                        <p className="text-[10px] text-gray-400 truncate max-w-[150px]">{app.patientEmail}</p>
+                        <p className="text-sm font-bold text-[#0f172a] leading-tight">{app.doctorName}</p>
+                        <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wide">Doctor</p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-8 py-6">
-                    <div className="flex items-center gap-2 px-3 py-1.5 bg-[#f1f5f9] rounded-lg w-fit">
-                      <FaCreditCard size={12} className="text-[#123499]" />
-                      <span className="text-[10px] font-black text-gray-600 uppercase tracking-wider">{app.paymentMethod}</span>
+
+                  {/* Schedule */}
+                  <td className="px-6 py-4">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-[#0f172a]">
+                        <FaCalendarCheck size={10} className="text-[#0f766e]" />
+                        {app.appointmentDate}
+                      </div>
+                      <div className="flex items-center gap-1.5 text-[11px] text-gray-400 font-semibold">
+                        <FaClock size={10} />
+                        {app.appointmentTime}
+                      </div>
                     </div>
                   </td>
-                  <td className="px-8 py-6">
-                    <div className="flex items-center justify-center gap-2">
-                      <button className="p-2.5 text-gray-400 hover:text-[#123499] hover:bg-[#123499]/10 rounded-xl transition-all"><FaEye size={14} /></button>
-                      <button className="p-2.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"><FaTrash size={14} /></button>
-                      <button className="p-2.5 text-gray-300 hover:text-gray-600 rounded-xl transition-all"><FaEllipsisV size={14} /></button>
+
+                  {/* Patient */}
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-xl bg-[#d4f0ec] flex items-center justify-center flex-shrink-0">
+                        <FaUserCircle size={14} className="text-[#0d9488]" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-[#0f172a]">{app.patientName}</p>
+                        <p className="text-[10px] text-gray-400 truncate max-w-[160px]">{app.patientEmail}</p>
+                      </div>
                     </div>
                   </td>
-                </motion.tr>
+
+                  {/* Payment */}
+                  <td className="px-6 py-4">
+                    {statusBadge(app.paymentMethod)}
+                  </td>
+
+                  {/* Actions */}
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-1.5">
+                      <button className="p-2 text-gray-400 hover:text-[#0f766e] hover:bg-[#e8f8f6] rounded-lg transition-all">
+                        <FaEye size={13} />
+                      </button>
+                      <button className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all">
+                        <FaTrash size={13} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
               ))}
             </tbody>
           </table>
         </div>
-        {appointments.length === 0 && (
-          <div className="p-20 text-center">
-            <p className="text-gray-400 font-bold uppercase tracking-widest">No Active Appointments Found</p>
+
+        {filtered.length === 0 && (
+          <div className="p-16 text-center">
+            <FaCalendarAlt className="mx-auto text-[#b2e0da] mb-3" size={36} />
+            <p className="text-gray-400 font-bold text-sm">No appointments found.</p>
           </div>
         )}
-      </motion.div>
+      </div>
     </div>
   );
 }
