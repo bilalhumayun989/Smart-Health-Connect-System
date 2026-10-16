@@ -1,4 +1,10 @@
-export const API_URL = (import.meta.env.VITE_API_URL?.trim() || 'http://localhost:8000').replace(/\/+$/, '');
+const configuredApiUrl = import.meta.env.VITE_API_URL?.trim();
+
+if (!configuredApiUrl) {
+  throw new Error('VITE_API_URL is required. Set it in the admin frontend environment.');
+}
+
+export const API_URL = configuredApiUrl.replace(/\/+$/, '');
 
 export const doctorName = (doctor) => {
   const name = [doctor.firstName, doctor.lastName].filter(Boolean).join(' ').replace(/^Dr\.?\s+/i, '');

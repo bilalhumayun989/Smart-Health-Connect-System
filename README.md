@@ -91,7 +91,7 @@ Multer, dotenv, bcrypt, CORS
 
 Start the API with `cd server` and `npm start`. Start each frontend in its own terminal with `npm run dev` from `patient-doctor` and `admin`.
 
-Both frontends use `VITE_API_URL` (default: `http://localhost:8000`). Copy the frontend's `.env.example` to `.env` to override this address, and restart Vite after changing it. For another device on your network, use the API machine's reachable address instead of localhost.
+Both frontends require `VITE_API_URL`. Copy the frontend's `.env.example` to `.env`, set the API's reachable URL, and restart Vite after changing it. The example files use localhost for local development; production builds must set `VITE_API_URL` to the deployed API URL.
 
 The API reads `server/.env` regardless of the terminal's working directory. `GET /api/health` reports whether MongoDB is connected. Database failures return HTTP 503 and appear as retryable errors in the directory and dashboard.
 
@@ -105,6 +105,6 @@ Project repository: https://github.com/bilalhumayun989/Smart-Health-Connect-Syst
 
 Copy `server/.env.example` to `server/.env` and configure MongoDB and unique random JWT_SECRET and DOCTOR_SECRET values. Set OPENAI_API_KEY only if the chatbot is required. Doctor token signing uses DOCTOR_SECRET; sign in again after changing it.
 
-The patient frontend runs on port 5174 and the admin frontend on port 5173 by default. Set VITE_API_URL in each frontend to the reachable backend URL before building for hosting. The patient navbar's Admin link uses VITE_ADMIN_URL, defaulting to http://localhost:5173. Serve each frontend with an SPA fallback to index.html, and host the Express backend on a service that supports WebSockets and persistent uploaded files. GitHub stores this source repository; a live full-stack deployment requires a hosting target and environment variables.
+The patient frontend runs on port 5174 and the admin frontend on port 5173 by default. Set VITE_API_URL in each frontend to the reachable backend URL before building for hosting. The patient navbar's Admin link uses VITE_ADMIN_URL, defaulting to https://healthcare.broshtech.com/. Serve each frontend with an SPA fallback to index.html, and host the Express backend on a service that supports WebSockets and persistent uploaded files. GitHub stores this source repository; a live full-stack deployment requires a hosting target and environment variables.
 
 Database backups, doctor login sheets, uploaded documents, local environment files, dependencies, test browser artifacts, and build output are excluded from Git. Seeding is optional and never runs during installation or startup. The default seed command only previews; its --apply flag resets application data and must be used intentionally.
