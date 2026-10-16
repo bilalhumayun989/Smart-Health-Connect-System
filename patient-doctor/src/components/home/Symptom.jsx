@@ -24,7 +24,7 @@ const symptoms = [
 
 const Symptom = () => {
   const navigate = useNavigate();
-  const go = () => navigate(localStorage.getItem('token') ? '/show-doctor' : '/patient-login');
+  const go = () => navigate('/show-doctor');
 
   return (
     <section className="py-20 bg-white relative overflow-hidden">

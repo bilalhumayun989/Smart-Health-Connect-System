@@ -1,9 +1,9 @@
+import { API_URL } from '../../config/api';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaPlus, FaBlog, FaChevronRight, FaRegCalendarAlt, FaSearch } from 'react-icons/fa';
 
-const API_URL = import.meta.env.VITE_API_URL;
 
 export default function ShowBlog() {
   const [blogs, setBlogs] = useState([]);

@@ -1,15 +1,16 @@
+import { API_URL } from '../../../config/api';
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FaUserMd, FaLock, FaEnvelope, FaArrowRight } from 'react-icons/fa';
 
 export default function DoctorLogin() {
+  const location = useLocation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [error, setError] = useState(location.state?.sessionMessage || '');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const API_URL = import.meta.env.VITE_API_URL;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -18,14 +19,14 @@ export default function DoctorLogin() {
       const res = await fetch(`${API_URL}/api/doctor/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: email.trim(), password }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.message || 'Login failed'); }
       else {
         localStorage.setItem('doctorToken', data.token);
         localStorage.setItem('doctor-id', data.doctorId);
-        navigate('/dashboard');
+        navigate('/dashboard', { replace: true });
       }
     } catch { setError('Server error. Please try again.'); }
     finally { setLoading(false); }
@@ -56,6 +57,7 @@ export default function DoctorLogin() {
 
           {error && (
             <motion.div
+              role="alert"
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
               className="mb-5 p-3.5 bg-red-50 border border-red-200 rounded-xl text-red-500 text-sm text-center"

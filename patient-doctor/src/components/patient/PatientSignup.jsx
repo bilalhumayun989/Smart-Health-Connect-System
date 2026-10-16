@@ -1,10 +1,10 @@
+import { API_URL } from '../../config/api';
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import countryCodes from './countryCodes';
 import { motion } from 'framer-motion';
 import { FaHeartbeat, FaUser, FaEnvelope, FaPhone, FaLock, FaUpload, FaArrowRight } from 'react-icons/fa';
 
-const API_URL = import.meta.env.VITE_API_URL;
 
 const PatientSignup = () => {
   const navigate = useNavigate();

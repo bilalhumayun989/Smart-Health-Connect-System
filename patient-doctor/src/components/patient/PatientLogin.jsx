@@ -1,9 +1,9 @@
+import { API_URL } from '../../config/api';
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FaHeartbeat, FaEnvelope, FaLock, FaArrowRight } from 'react-icons/fa';
 
-const API_URL = import.meta.env.VITE_API_URL;
 
 const PatientLogin = () => {
   const [email, setEmail] = useState('');
@@ -11,6 +11,7 @@ const PatientLogin = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -26,7 +27,7 @@ const PatientLogin = () => {
       else {
         localStorage.setItem('token', data.token);
         localStorage.setItem('patientId', data.userId);
-        navigate('/show-doctor');
+        navigate(location.state?.from === '/appointments' ? '/appointments' : '/show-doctor', { replace: true });
       }
     } catch { setError('Server error. Try again.'); }
     finally { setLoading(false); }

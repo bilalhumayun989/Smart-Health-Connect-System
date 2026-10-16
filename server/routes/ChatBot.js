@@ -6,8 +6,6 @@ const openai = process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'you
   ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
   : null;
 
-console.log('OPENAI_API_KEY Loaded:', process.env.OPENAI_API_KEY ? process.env.OPENAI_API_KEY.slice(0, 10) : 'missing');
-
 router.post('/', async (req, res) => {
   const { query } = req.body;
 

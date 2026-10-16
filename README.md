@@ -85,3 +85,26 @@ MongoDB with "Mongoose"
 JWT for authentication
 Socket.IO for real-time messaging
 Multer, dotenv, bcrypt, CORS
+
+
+## Local development
+
+Start the API with `cd server` and `npm start`. Start each frontend in its own terminal with `npm run dev` from `patient-doctor` and `admin`.
+
+Both frontends use `VITE_API_URL` (default: `http://localhost:8000`). Copy the frontend's `.env.example` to `.env` to override this address, and restart Vite after changing it. For another device on your network, use the API machine's reachable address instead of localhost.
+
+The API reads `server/.env` regardless of the terminal's working directory. `GET /api/health` reports whether MongoDB is connected. Database failures return HTTP 503 and appear as retryable errors in the directory and dashboard.
+
+Doctor and patient lists show saved records; dashboard activity uses registration timestamps and scheduled appointment dates. Missing uploaded photos display a generic avatar. Restore the original files under `server/uploads/doctors` to show missing doctor photos; do not seed or replace database records to repair images.
+
+Run `npm test` in `admin` for analytics date and empty-data checks. Run `npm run lint` and `npm run build` in each frontend to validate it. In Windows PowerShell with restricted script execution, use `npm.cmd` in place of `npm`.
+
+## Repository and environment setup
+
+Project repository: https://github.com/bilalhumayun989/Smart-Health-Connect-System
+
+Copy `server/.env.example` to `server/.env` and configure MongoDB and unique random JWT_SECRET and DOCTOR_SECRET values. Set OPENAI_API_KEY only if the chatbot is required. Doctor token signing uses DOCTOR_SECRET; sign in again after changing it.
+
+The patient frontend runs on port 5174 and the admin frontend on port 5173 by default. Set VITE_API_URL in each frontend to the reachable backend URL before building for hosting. Serve each frontend with an SPA fallback to index.html, and host the Express backend on a service that supports WebSockets and persistent uploaded files. GitHub stores this source repository; a live full-stack deployment requires a hosting target and environment variables.
+
+Database backups, doctor login sheets, uploaded documents, local environment files, dependencies, test browser artifacts, and build output are excluded from Git. Seeding is optional and never runs during installation or startup. The default seed command only previews; its --apply flag resets application data and must be used intentionally.

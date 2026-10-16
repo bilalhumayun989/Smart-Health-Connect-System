@@ -1,3 +1,4 @@
+import { API_URL } from '../../config/api';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
@@ -8,17 +9,20 @@ export default function ShowBlog() {
   const [blogs, setBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const API_URL = import.meta.env.VITE_API_URL;
+  const [error, setError] = useState('');
+  const [reload, setReload] = useState(0);
 
   useEffect(() => {
-    axios.get(`${API_URL}/api/blog/all`)
-      .then(r => { setBlogs(r.data); setLoading(false); })
-      .catch(() => setLoading(false));
-  }, []);
+    setLoading(true); setError('');
+    axios.get(`${API_URL}/api/blog/all`, { timeout: 15000 })
+      .then(r => { if (!Array.isArray(r.data)) throw new Error('Invalid article data'); setBlogs(r.data); })
+      .catch(e => setError(e.response?.data?.message || 'Unable to load articles. Please retry.'))
+      .finally(() => setLoading(false));
+  }, [reload]);
 
   const filtered = blogs.filter(b =>
-    b.title.toLowerCase().includes(search.toLowerCase()) ||
-    b.description.toLowerCase().includes(search.toLowerCase())
+    (b.title || '').toLowerCase().includes(search.toLowerCase()) ||
+    (b.description || '').toLowerCase().includes(search.toLowerCase())
   );
 
   if (loading) return (
@@ -27,6 +31,8 @@ export default function ShowBlog() {
       <p className="text-gray-400 text-xs font-medium uppercase tracking-widest">Loading articles…</p>
     </div>
   );
+
+  if (error) return <div role="alert" className="min-h-screen px-6 pt-28 text-red-700">{error}<button className="ml-4 underline" onClick={() => setReload(r => r + 1)}>Retry</button></div>;
 
   return (
     <div className="min-h-screen bg-white pt-28 pb-16 px-6">

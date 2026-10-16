@@ -33,7 +33,7 @@ export default function DashBoardSideBar() {
     const handleResize = () => {
       const mobile = window.innerWidth < 1024;
       setIsMobile(mobile);
-      if (!mobile) setIsOpen(true);
+      setIsOpen(!mobile);
     };
     window.addEventListener('resize', handleResize);
     handleResize();
@@ -62,7 +62,7 @@ export default function DashBoardSideBar() {
             animate={{ x: 0 }}
             exit={{ x: -280 }}
             transition={{ type: 'spring', damping: 28, stiffness: 220 }}
-            className="fixed lg:sticky top-0 left-0 z-40 h-screen w-64 flex flex-col sidebar-glass overflow-hidden"
+            className="fixed lg:sticky top-0 left-0 z-40 h-screen w-64 shrink-0 flex flex-col sidebar-glass overflow-hidden"
           >
             {/* ── Logo ── */}
             <div className="px-5 pt-7 pb-5">

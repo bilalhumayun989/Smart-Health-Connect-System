@@ -1,3 +1,4 @@
+import { API_URL } from '../../config/api';
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
@@ -9,7 +10,7 @@ export default function SecurityPolicy() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    axios.get('http://192.168.1.8:8000/api/security-policy')
+    axios.get(`${API_URL}/api/security-policy`)
       .then(r => setPolicy(r.data?.policy || ''))
       .catch(e => console.error(e));
   }, []);
@@ -19,7 +20,7 @@ export default function SecurityPolicy() {
     if (!policy.trim()) return setStatus({ type: 'error', message: 'Security policy cannot be empty.' });
     setLoading(true);
     try {
-      await axios.post('http://192.168.1.8:8000/api/security-policy', { policy });
+      await axios.post(`${API_URL}/api/security-policy`, { policy });
       setStatus({ type: 'success', message: 'Security policy updated and secured.' });
       setTimeout(() => setStatus({ type: '', message: '' }), 5000);
     } catch {

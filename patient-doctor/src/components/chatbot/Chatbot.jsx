@@ -1,3 +1,4 @@
+import { API_URL } from '../../config/api';
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -32,7 +33,6 @@ const Chatbot = () => {
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
-  const API_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });

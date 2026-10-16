@@ -2,3 +2,18 @@
 .env
 .env.*
 !.env.example
+
+# Dependencies, builds, local tooling, and logs
+node_modules/
+dist/
+dist-ssr/
+.npm-cache/
+.verification/
+*.log
+.aws/
+
+# Database snapshots, account passwords, and uploaded personal documents
+server/backups/
+server/private/
+server/uploads/**
+!server/uploads/.gitkeep

@@ -1,3 +1,4 @@
+import { API_URL } from '../../config/api';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -8,6 +9,7 @@ export default function BlogDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [blog, setBlog] = useState(null);
+  const [error, setError] = useState('');
   const [descriptionPart1, setDescriptionPart1] = useState('');
   const [descriptionPart2, setDescriptionPart2] = useState('');
   const [descriptionPart3, setDescriptionPart3] = useState('');
@@ -15,7 +17,8 @@ export default function BlogDetail() {
   useEffect(() => {
     const fetchBlog = async () => {
       try {
-        const res = await axios.get(`http://192.168.1.8:8000/api/blog/${id}`);
+        setError(''); setBlog(null);
+        const res = await axios.get(`${API_URL}/api/blog/${id}`, { timeout: 15000 });
         setBlog(res.data);
 
         const descriptionText = res.data.description;
@@ -28,13 +31,14 @@ export default function BlogDetail() {
           setDescriptionPart3(descriptionText.substring(charCountForImg2));
         }
       } catch (err) {
-        console.error("Failed to fetch blog:", err);
+        setError(err.response?.data?.message || 'Unable to load this article.');
       }
     };
 
     fetchBlog();
   }, [id]);
 
+  if (error) return <p role="alert" className="rounded-xl bg-red-50 p-5 text-red-700">{error}<button className="ml-4 underline" onClick={() => navigate('/show-blog')}>Back to articles</button></p>;
   if (!blog) {
     return (
       <div className="flex flex-col items-center justify-center p-20 gap-4">
@@ -117,7 +121,7 @@ export default function BlogDetail() {
             className="rounded-[3rem] overflow-hidden shadow-2xl border-8 border-white group"
           >
             <img
-              src={`http://192.168.1.8:8000/uploads/blogs/${blog.blogImage}`}
+              src={`${API_URL}/uploads/blogs/${blog.blogImage}`}
               alt={blog.title}
               className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-[2s]"
             />
@@ -143,7 +147,7 @@ export default function BlogDetail() {
             className="rounded-[3rem] overflow-hidden shadow-2xl border-8 border-white group p-4 bg-gray-50"
           >
             <img
-              src={`http://192.168.1.8:8000/uploads/blogs/${blog.descriptionImage}`}
+              src={`${API_URL}/uploads/blogs/${blog.descriptionImage}`}
               alt="Supplementary visual"
               className="w-full h-auto object-cover rounded-[2rem] group-hover:scale-105 transition-transform duration-[2s]"
             />

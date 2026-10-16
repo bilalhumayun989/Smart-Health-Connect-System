@@ -4,7 +4,7 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const dotenv = require('dotenv');
-dotenv.config();
+dotenv.config({ path: require('path').join(__dirname, '.env') });
 const connectDB = require('./config/conn');
 const patientRoutes = require('./routes/patientRoutes');
 const doctorAuthRoutes = require('./routes/doctorRoutes');
@@ -31,6 +31,19 @@ const io = new Server(server, {
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.get('/api/health', (req, res) => {
+  const connected = require('mongoose').connection.readyState === 1;
+  res.status(connected ? 200 : 503).json({
+    database: connected ? 'connected' : 'unavailable',
+    message: connected ? 'Service ready' : 'Database unavailable. Please try again shortly.',
+  });
+});
+app.use(['/api/patients', '/api/doctor', '/api/appointment', '/api/chat', '/api/blog', '/api/policy', '/api/security-policy'], (req, res, next) => {
+  if (require('mongoose').connection.readyState !== 1) {
+    return res.status(503).json({ message: 'Database unavailable. Please try again shortly.' });
+  }
+  next();
+});
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/uploads/doctors", express.static(path.join(__dirname, "uploads/doctors")));
 app.use("/uploads/blogs", express.static(path.join(__dirname, "uploads/blogs")));

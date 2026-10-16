@@ -1,3 +1,4 @@
+import { API_URL } from '../../config/api';
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
@@ -9,7 +10,7 @@ export default function PrivacyPolicy() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    axios.get('http://192.168.1.8:8000/api/policy')
+    axios.get(`${API_URL}/api/policy`)
       .then(r => { if (r.data?.policy) setPolicy(r.data.policy); })
       .catch(e => console.error(e));
   }, []);
@@ -19,7 +20,7 @@ export default function PrivacyPolicy() {
     if (!policy.trim()) return setStatus({ type: 'error', message: 'Policy content cannot be empty.' });
     setLoading(true);
     try {
-      const r = await axios.post('http://192.168.1.8:8000/api/policy', { policy });
+      const r = await axios.post(`${API_URL}/api/policy`, { policy });
       setStatus({ type: 'success', message: r.data.message || 'Privacy policy updated successfully.' });
       setTimeout(() => setStatus({ type: '', message: '' }), 5000);
     } catch {

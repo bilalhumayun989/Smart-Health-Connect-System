@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom';
 const HomeHero = () => {
   const navigate = useNavigate();
 
-  const goBook = () => navigate(localStorage.getItem('token') ? '/show-doctor' : '/patient-login');
+  const goBook = () => navigate('/show-doctor');
 
   return (
     <section className="relative min-h-screen flex items-start pt-20 pb-16 overflow-hidden bg-white">

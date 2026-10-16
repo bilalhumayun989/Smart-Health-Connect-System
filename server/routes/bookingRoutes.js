@@ -1,6 +1,17 @@
 const express = require('express');
 const router = express.Router();
 const Booking = require('../models/Booking');
+const protectPatient = require('../middleware/authMiddleware');
+
+router.get('/patient/me', protectPatient, async (req, res) => {
+  try {
+    const appointments = await Booking.find({ patientId: req.patient._id })
+      .sort({ appointmentDate: -1, appointmentTime: -1 });
+    res.json(appointments);
+  } catch {
+    res.status(500).json({ message: 'Unable to load your appointments. Please try again.' });
+  }
+});
 
 // POST /api/bookings
 // Create a new booking

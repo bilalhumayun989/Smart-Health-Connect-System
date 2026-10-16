@@ -7,6 +7,7 @@ import DoctorLogin from './components/doctor/form/DoctorLogin'
 import ShowDoctor from './components/doctor/ShowDoctor'
 import PatientLogin from './components/patient/PatientLogin'
 import PatientSignup from './components/patient/PatientSignup'
+import PatientAppointments from './components/patient/PatientAppointments'
 import MainDashBoard from './components/doctor/dashboard/MainDashBoard'
 import ViewServices from './components/home/ViewServices'
 import PatientChat from './components/patient/PatientChat'
@@ -19,11 +20,13 @@ const AUTH_ROUTES = ['/doctor-login', '/login', '/patient-signup', '/doctor-sign
 function AppLayout() {
   const location = useLocation()
   const isAuthPage = AUTH_ROUTES.includes(location.pathname)
+  const isDashboard = location.pathname.startsWith('/dashboard')
+  const isPatientChat = location.pathname.startsWith('/patient-chat/')
 
   return (
     <>
-      {!isAuthPage && <UserNavbar />}
-      {!isAuthPage && <Chatbot />}
+      {!isAuthPage && !isDashboard && <UserNavbar />}
+      {!isAuthPage && !isPatientChat && !isDashboard && <Chatbot />}
       <Routes>
         <Route path='/' element={<HomeMain />} />
         <Route path='/doctor-signup' element={<DoctorSignup />} />
@@ -31,6 +34,7 @@ function AppLayout() {
         <Route path='/show-doctor' element={<ShowDoctor />} />
         <Route path='/login' element={<PatientLogin />} />
         <Route path='/patient-signup' element={<PatientSignup />} />
+        <Route path='/appointments' element={<PatientAppointments />} />
         <Route path='/dashboard/*' element={<MainDashBoard />} />
         <Route path='/viewservices' element={<ViewServices />} />
         <Route path='/patient-chat/:doctorId' element={<PatientChat />} />

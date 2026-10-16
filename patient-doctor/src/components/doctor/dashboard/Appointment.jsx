@@ -1,175 +1,175 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import { FaCalendarAlt, FaUser, FaEnvelope, FaClock, FaMoneyBillWave, FaChevronRight, FaFilter } from 'react-icons/fa';
-import { motion, AnimatePresence } from 'framer-motion';
-
-const API_URL = import.meta.env.VITE_API_URL;
-
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import axios from "axios";
+import {
+  FaCalendarAlt,
+  FaClock,
+  FaCommentAlt,
+  FaSearch,
+  FaUser,
+} from "react-icons/fa";
+import { API_URL } from "../../../config/api";
+import { profileName } from "../../../utils/profileName";
 export default function Appointment() {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
-
+  const [error, setError] = useState("");
+  const [reload, setReload] = useState(0);
+  const [search, setSearch] = useState("");
   useEffect(() => {
-    const fetchAppointments = async () => {
-      try {
-        const doctorId = localStorage.getItem('doctor-id');
-        const token = localStorage.getItem('doctorToken');
-
-        if (!doctorId || !token) {
-          console.error('Doctor not authenticated');
-          return;
-        }
-
-        const res = await axios.get(
-          `${API_URL}/api/appointment/doctor/${doctorId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        setAppointments(res.data);
-      } catch (err) {
-        console.error('Error fetching appointments:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAppointments();
-  }, []);
-
+    const controller = new AbortController();
+    setLoading(true);
+    setError("");
+    axios
+      .get(
+        API_URL +
+          "/api/appointment/doctor/" +
+          localStorage.getItem("doctor-id"),
+        {
+          headers: {
+            Authorization: "Bearer " + localStorage.getItem("doctorToken"),
+          },
+          signal: controller.signal,
+          timeout: 15000,
+        },
+      )
+      .then((r) => {
+        if (!Array.isArray(r.data)) throw new Error("Invalid appointments");
+        setAppointments(r.data);
+      })
+      .catch((e) => {
+        if (!controller.signal.aborted)
+          setError(
+            e.response?.data?.message ||
+              "Unable to load appointments. Please retry.",
+          );
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
+  }, [reload]);
+  const filtered = appointments
+    .filter((a) =>
+      (a.patientName + " " + a.patientEmail + " " + a.appointmentDate)
+        .toLowerCase()
+        .includes(search.trim().toLowerCase()),
+    )
+    .sort((a, b) =>
+      (a.appointmentDate + "T" + a.appointmentTime).localeCompare(
+        b.appointmentDate + "T" + b.appointmentTime,
+      ),
+    );
   return (
-    <div className="max-w-7xl mx-auto space-y-12">
-      {/* Header Section */}
-      <div className="flex flex-col md:flex-row justify-between items-end gap-8">
-        <div className="space-y-4">
-          <div className="inline-block px-4 py-1.5 bg-white/5 border border-white/10 rounded-full">
-            <span className="text-xs font-black uppercase tracking-widest text-[#5eaf73]">Schedule Management</span>
-          </div>
-          <h2 className="text-4xl font-black text-white tracking-tight flex items-center">
-            My <span className="text-gradient ml-3">Appointments</span>
-          </h2>
-          <p className="text-gray-400 text-lg max-w-xl">
-            Overview of your upcoming patient consultations and surgical schedules.
+    <section className="space-y-6 pb-6">
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-widest text-teal-700">
+            Your schedule
+          </p>
+          <h1 className="mt-2 text-3xl font-bold">My Appointments</h1>
+          <p className="mt-2 text-sm text-gray-500">
+            Review booked consultations and contact your patients.
           </p>
         </div>
-
-        <div className="flex gap-4">
-          <div className="px-6 py-3 bg-[#0a2472]/10 border border-[#0a2472]/20 rounded-2xl">
-            <span className="text-white font-black text-xl">{appointments.length}</span>
-            <span className="text-gray-500 font-bold text-xs uppercase tracking-widest ml-3">Total Events</span>
-          </div>
+        <div className="relative">
+          <FaSearch
+            className="absolute left-3 top-3.5 text-gray-400"
+            size={13}
+          />
+          <input
+            aria-label="Search appointments"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search patients or dates"
+            className="w-full rounded-xl border border-[#e2f4f2] bg-white py-3 pl-9 pr-4 text-sm outline-none focus:border-teal-600 sm:w-64"
+          />
         </div>
       </div>
-
       {loading ? (
-        <div className="flex flex-col items-center justify-center h-96 space-y-6">
-          <div className="w-12 h-12 border-4 border-[#0a2472] border-t-[#5eaf73] rounded-full animate-spin" />
-          <p className="text-gray-500 font-black uppercase tracking-widest text-xs">Synchronizing Calendar...</p>
+        <p role="status" className="p-12 text-center text-sm text-gray-500">
+          Loading appointments...
+        </p>
+      ) : error ? (
+        <p
+          role="alert"
+          className="rounded-xl border border-red-100 bg-red-50 p-5 text-sm text-red-700"
+        >
+          {error}
+          <button
+            className="ml-4 underline"
+            onClick={() => setReload((r) => r + 1)}
+          >
+            Retry
+          </button>
+        </p>
+      ) : !filtered.length ? (
+        <div className="rounded-2xl border border-[#e2f4f2] bg-white px-5 py-12 text-center">
+          <FaCalendarAlt className="mx-auto mb-4 text-teal-600" size={28} />
+          <h2 className="font-semibold">
+            {appointments.length
+              ? "No matching appointments"
+              : "No appointments yet"}
+          </h2>
+          <p className="mt-2 text-sm text-gray-500">
+            {appointments.length
+              ? "Try another patient name or date."
+              : "Your booked consultations will appear here."}
+          </p>
         </div>
-      ) : appointments.length === 0 ? (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="bg-white/5 border border-white/5 rounded-[3rem] p-20 text-center backdrop-blur-xl"
-        >
-          <div className="w-24 h-24 bg-[#0a2472]/10 rounded-[2.5rem] flex items-center justify-center mx-auto mb-8">
-            <FaCalendarAlt size={40} className="text-[#0a2472]" />
-          </div>
-          <h3 className="text-2xl font-black text-white mb-4">Clear Horizon</h3>
-          <p className="text-gray-500 max-w-sm mx-auto font-medium">No appointments scheduled for this period. Take this time to update your patient records.</p>
-        </motion.div>
       ) : (
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white/5 border border-white/10 rounded-[3rem] overflow-hidden backdrop-blur-xl shadow-2xl"
-        >
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="border-b border-white/5 bg-white/5">
-                  <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-[#5eaf73]">
-                    <div className="flex items-center gap-3">
-                      <FaUser size={10} /> Patient
+        <>
+          <p className="text-xs text-gray-500">
+            {filtered.length} appointments
+          </p>
+          <div className="space-y-3">
+            {filtered.map((a) => {
+              const name = profileName({ firstName: a.patientName });
+              return (
+                <article
+                  key={a._id}
+                  className="flex flex-col justify-between gap-4 rounded-2xl border border-[#e2f4f2] bg-white p-5 sm:flex-row sm:items-center"
+                >
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-teal-50 text-teal-700">
+                      <FaUser size={15} />
+                    </span>
+                    <div className="min-w-0">
+                      <h2 className="break-words text-sm font-semibold">
+                        {name === "Your account" ? "Patient" : name}
+                      </h2>
+                      <p className="mt-1 break-all text-xs text-gray-500">
+                        {a.patientEmail || "Email not provided"}
+                      </p>
                     </div>
-                  </th>
-                  <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">
-                    <div className="flex items-center gap-3">
-                      <FaEnvelope size={10} /> contact
-                    </div>
-                  </th>
-                  <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">
-                    <div className="flex items-center gap-3">
-                      <FaCalendarAlt size={10} /> Date
-                    </div>
-                  </th>
-                  <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">
-                    <div className="flex items-center gap-3">
-                      <FaClock size={10} /> Time
-                    </div>
-                  </th>
-                  <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">
-                    <div className="flex items-center gap-3">
-                      <FaMoneyBillWave size={10} /> Method
-                    </div>
-                  </th>
-                  <th className="px-10 py-6"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                {appointments.map((appt, index) => (
-                  <motion.tr
-                    key={appt._id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    className="hover:bg-white/5 transition-colors group cursor-pointer"
-                  >
-                    <td className="px-10 py-8">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-[#0a2472] rounded-2xl flex items-center justify-center text-white font-black text-lg shadow-lg">
-                          {appt.patientName.charAt(0)}
-                        </div>
-                        <div className="text-lg font-bold text-white tracking-tight">{appt.patientName}</div>
-                      </div>
-                    </td>
-                    <td className="px-10 py-8">
-                      <div className="text-gray-400 font-medium">{appt.patientEmail}</div>
-                    </td>
-                    <td className="px-10 py-8">
-                      <div className="px-4 py-2 bg-white/5 rounded-xl border border-white/5 inline-block text-white font-bold">
-                        {appt.appointmentDate}
-                      </div>
-                    </td>
-                    <td className="px-10 py-8">
-                      <div className="flex items-center gap-3 text-white font-black">
-                        <span className="w-2 h-2 rounded-full bg-[#5eaf73]" />
-                        {appt.appointmentTime}
-                      </div>
-                    </td>
-                    <td className="px-10 py-8">
-                      <span className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${appt.paymentMethod === 'Online'
-                          ? 'bg-[#5eaf73]/10 text-[#5eaf73] border-[#5eaf73]/20'
-                          : 'bg-[#0a2472]/10 text-[#0a2472] border-[#0a2472]/20'
-                        }`}>
-                        {appt.paymentMethod}
-                      </span>
-                    </td>
-                    <td className="px-10 py-8">
-                      <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-gray-500 group-hover:text-white group-hover:bg-[#0a2472] transition-all">
-                        <FaChevronRight size={12} />
-                      </div>
-                    </td>
-                  </motion.tr>
-                ))}
-              </tbody>
-            </table>
+                  </div>
+                  <div className="flex flex-wrap gap-x-5 gap-y-2 text-xs text-gray-600">
+                    <span className="flex items-center gap-2">
+                      <FaCalendarAlt className="text-teal-700" />
+                      {a.appointmentDate}
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <FaClock className="text-teal-700" />
+                      {a.appointmentTime}
+                    </span>
+                    <span className="rounded-full bg-teal-50 px-2 py-0.5 text-teal-700">
+                      {a.paymentMethod || "Not provided"}
+                    </span>
+                  </div>
+                  {a.patientId && (
+                    <Link
+                      to={"/dashboard/chat?patient=" + a.patientId}
+                      className="inline-flex shrink-0 items-center gap-2 text-sm font-medium text-teal-700 hover:underline"
+                    >
+                      <FaCommentAlt size={13} /> Message
+                    </Link>
+                  )}
+                </article>
+              );
+            })}
           </div>
-        </motion.div>
+        </>
       )}
-    </div>
+    </section>
   );
 }

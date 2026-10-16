@@ -19,7 +19,7 @@ export default function MainDashBoard() {
   return (
     <div className="flex min-h-screen bg-white">
       <DashBoardSideBar />
-      <div className="flex-1 flex flex-col min-h-screen overflow-x-hidden">
+      <div className="flex-1 min-w-0 flex flex-col min-h-screen overflow-x-hidden">
         <AdminNavbar />
         <main className="flex-1 p-4 md:p-8 lg:p-10">
           <div className="max-w-7xl mx-auto">

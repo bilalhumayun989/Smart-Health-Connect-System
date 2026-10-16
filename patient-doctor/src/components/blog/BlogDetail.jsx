@@ -1,3 +1,4 @@
+import { API_URL } from '../../config/api';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -13,18 +14,20 @@ export default function BlogDetail() {
   const [blog, setBlog] = useState(null);
   const [parts, setParts] = useState([]);
   const [readTime, setReadTime] = useState(0);
-  const API_URL = import.meta.env.VITE_API_URL;
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    axios.get(`${API_URL}/api/blog/${id}`)
+    setError(''); setBlog(null);
+    axios.get(`${API_URL}/api/blog/${id}`, { timeout: 15000 })
       .then(r => {
         setBlog(r.data);
-        setReadTime(Math.ceil(r.data.description.split(/\s+/).length / 200));
-        setParts(r.data.description.split('\n').filter(p => p.trim()));
+        setReadTime(Math.ceil((r.data.description || '').split(/\s+/).length / 200));
+        setParts((r.data.description || '').split('\n').filter(p => p.trim()));
       })
-      .catch(e => console.error(e));
+      .catch(e => setError(e.response?.data?.message || 'Unable to load this article.'));
   }, [id]);
 
+  if (error) return <div role="alert" className="min-h-screen px-6 pt-28 text-red-700">{error}<button className="ml-4 underline" onClick={() => navigate('/Blog')}>Back to articles</button></div>;
   if (!blog) return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-4 pt-20">
       <div className="w-10 h-10 border-4 border-[#e2f4f2] border-t-[#0f766e] rounded-full animate-spin" />

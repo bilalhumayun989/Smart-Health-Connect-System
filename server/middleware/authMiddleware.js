@@ -10,6 +10,7 @@ const protectPatient = async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.patient = await Patient.findById(decoded.id).select("-password");
+    if (!req.patient) return res.status(401).json({ message: 'Patient account not found. Please sign in again.' });
     next();
   } catch (err) {
     res.status(401).json({ message: 'Invalid token' });

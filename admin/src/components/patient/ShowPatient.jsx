@@ -1,8 +1,8 @@
+import { API_URL, uploadUrl } from '../../config/api';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { FaUserInjured, FaEnvelope, FaPhone, FaSearch, FaCheckCircle, FaUserCircle } from 'react-icons/fa';
 
-const API_URL = import.meta.env.VITE_API_URL;
 
 /* Three clean placeholder avatars using UI Avatars */
 const avatarUrl = (name) =>
@@ -11,12 +11,22 @@ const avatarUrl = (name) =>
 export default function ShowPatient() {
   const [patients, setPatients] = useState([]);
   const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [reload, setReload] = useState(0);
 
   useEffect(() => {
-    axios.get(`${API_URL}/api/patients/all`)
-      .then(r => setPatients(r.data))
-      .catch(e => console.error(e));
-  }, []);
+    const controller = new AbortController();
+    setLoading(true); setError('');
+    axios.get(`${API_URL}/api/patients/all`, { signal: controller.signal, timeout: 15000 })
+      .then(r => {
+        if (!Array.isArray(r.data)) throw new Error('Invalid patient data');
+        setPatients(r.data);
+      })
+      .catch(e => { if (!controller.signal.aborted) setError(e.response?.data?.message || 'Unable to load patients. Please retry.'); })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  }, [reload]);
 
   const filtered = patients.filter(p =>
     `${p.firstName} ${p.lastName} ${p.email}`.toLowerCase().includes(search.toLowerCase())
@@ -33,7 +43,7 @@ export default function ShowPatient() {
           <p className="text-gray-400 text-sm mt-1">Complete overview of all registered patients.</p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3 min-w-0">
           <div className="flex items-center gap-2 bg-white border border-[#e2f4f2] rounded-xl px-4 py-2.5 w-60 focus-within:border-[#0f766e] focus-within:ring-2 focus-within:ring-[#0f766e]/10 transition-all">
             <FaSearch className="text-gray-300 text-sm flex-shrink-0" />
             <input
@@ -46,14 +56,16 @@ export default function ShowPatient() {
           </div>
           <div className="flex items-center gap-2.5 bg-[#e8f8f6] border border-[#0f766e]/15 rounded-xl px-4 py-2.5">
             <FaUserInjured className="text-[#0f766e]" size={14} />
-            <span className="text-sm font-black text-[#0f766e]">{patients.length} Patients</span>
+            <span className="text-sm font-black text-[#0f766e]">{loading || error ? '—' : patients.length} Patients</span>
           </div>
         </div>
       </div>
 
       {/* Grid — max 3 columns, proper avatar cards */}
+      {loading && <p role="status" className="p-10 text-center text-gray-500">Loading patients...</p>}
+      {error && <p role="alert" className="rounded-xl bg-red-50 p-5 text-red-700">{error}<button className="ml-4 underline" onClick={() => setReload(r => r + 1)}>Retry</button></p>}
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {filtered.map((patient) => (
+        {!loading && !error && filtered.map((patient) => (
           <div
             key={patient._id}
             className="bg-white rounded-2xl border border-[#e2f4f2] overflow-hidden hover:shadow-lg hover:shadow-[#0f766e]/10 hover:-translate-y-1 transition-all duration-300"
@@ -68,9 +80,10 @@ export default function ShowPatient() {
             </div>
 
             {/* Avatar — overlaps header */}
-            <div className="flex flex-col items-center -mt-10 px-5 pb-5">
+            <div className="relative flex flex-col items-center -mt-10 px-5 pb-5">
               <img
-                src={avatarUrl(`${patient.firstName} ${patient.lastName}`)}
+                src={uploadUrl(patient.profileImage) || avatarUrl(`${patient.firstName} ${patient.lastName}`)}
+                onError={e => { e.currentTarget.onerror = null; e.currentTarget.src = avatarUrl(`${patient.firstName} ${patient.lastName}`); }}
                 alt={patient.firstName}
                 className="w-20 h-20 rounded-2xl object-cover border-4 border-white shadow-md bg-[#e8f8f6]"
               />
@@ -81,7 +94,7 @@ export default function ShowPatient() {
                 </h5>
                 <div className="flex items-center justify-center gap-1 mt-1">
                   <FaCheckCircle size={9} className="text-[#0f766e]" />
-                  <span className="text-[10px] font-bold text-[#0f766e] uppercase tracking-wider">Verified Patient</span>
+                  <span className="text-[10px] font-bold text-[#0f766e] uppercase tracking-wider">Registered Patient</span>
                 </div>
               </div>
 
@@ -91,7 +104,7 @@ export default function ShowPatient() {
                   <span className="w-7 h-7 rounded-lg bg-[#e8f8f6] flex items-center justify-center flex-shrink-0">
                     <FaEnvelope size={10} className="text-[#0f766e]" />
                   </span>
-                  <span className="text-xs font-semibold text-gray-600 truncate">{patient.email}</span>
+                  <span className="min-w-0 break-words text-xs font-semibold text-gray-600">{patient.email || 'Email not provided'}</span>
                 </div>
                 <div className="flex items-center gap-2.5">
                   <span className="w-7 h-7 rounded-lg bg-[#e8f8f6] flex items-center justify-center flex-shrink-0">
@@ -103,15 +116,17 @@ export default function ShowPatient() {
                 </div>
               </div>
 
-              <button className="w-full mt-4 py-2.5 bg-[#e8f8f6] hover:bg-[#0f766e] text-[#0f766e] hover:text-white rounded-xl text-[11px] font-black uppercase tracking-widest transition-all duration-200">
-                View Details
-              </button>
+              <details className="w-full mt-4 rounded-xl bg-[#e8f8f6] px-4 py-3 text-sm text-[#0f766e]">
+                <summary className="cursor-pointer font-semibold">View Details</summary>
+                <p className="mt-3 break-all text-xs">Record ID: {patient._id}</p>
+                <p className="mt-2 text-xs">Registered: {patient.createdAt ? new Date(patient.createdAt).toLocaleDateString() : 'Not provided'}</p>
+              </details>
             </div>
           </div>
         ))}
       </div>
 
-      {filtered.length === 0 && (
+      {!loading && !error && filtered.length === 0 && (
         <div className="bg-white border border-[#e2f4f2] rounded-2xl p-16 text-center">
           <FaUserInjured className="mx-auto text-[#b2e0da] mb-4" size={40} />
           <p className="text-gray-400 font-bold text-sm">No patients found.</p>

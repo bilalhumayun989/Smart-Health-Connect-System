@@ -1,3 +1,4 @@
+import { API_URL } from '../../config/api';
 import React, { useState } from 'react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
@@ -34,7 +35,7 @@ export default function InsertBlog() {
     data.append('descriptionImage', formData.descriptionImage);
 
     try {
-      await axios.post('http://192.168.1.8:8000/api/blog/insert-blog', data);
+      await axios.post(`${API_URL}/api/blog/insert-blog`, data);
       alert('Publication established successfully!');
       navigate('/show-blog');
     } catch (err) {
