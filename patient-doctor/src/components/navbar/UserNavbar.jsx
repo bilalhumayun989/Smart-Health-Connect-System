@@ -1,8 +1,8 @@
-import { API_URL } from '../../config/api';
+import { ADMIN_URL, API_URL } from '../../config/api';
 import React, { useState, useEffect } from 'react';
 import {
   FaUserMd, FaCalendarAlt, FaBlog, FaChevronDown,
-  FaHeartbeat, FaBars, FaTimes,
+  FaHeartbeat, FaBars, FaTimes, FaUserShield,
 } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
@@ -138,7 +138,10 @@ const UserNavbar = () => {
               )}
             </div>
           ))}
-
+          <a href={ADMIN_URL} target="_blank" rel="noopener noreferrer"
+            className="flex items-center gap-2 rounded-xl border border-[#e2f4f2] px-4 py-2 text-sm font-medium text-[#0f766e] transition-colors hover:bg-[#e8f8f6]">
+            <FaUserShield size={13} /> Admin
+          </a>
         </div>
 
         <div className="flex shrink-0 items-center gap-3">
@@ -185,6 +188,10 @@ const UserNavbar = () => {
                   )}
                 </div>
               ))}
+              <a href={ADMIN_URL} target="_blank" rel="noopener noreferrer" onClick={() => setMenuOpen(false)}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-[#e2f4f2] text-[#0f766e] font-semibold text-sm">
+                <FaUserShield size={13} /> Admin
+              </a>
             </div>
           </motion.div>
         )}
