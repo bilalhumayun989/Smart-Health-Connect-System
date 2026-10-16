@@ -1,4 +1,4 @@
-import { API_URL } from '../../config/api';
+import { API_URL, uploadUrl } from '../../config/api';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -116,7 +116,7 @@ export default function BlogDetail() {
           className="rounded-2xl overflow-hidden border border-[#e2f4f2] mb-10 shadow-md shadow-[#0f766e]/8"
         >
           <img
-            src={`${API_URL}/uploads/blogs/${blog.blogImage}`}
+            src={uploadUrl(blog.blogImage, 'blogs')}
             alt={blog.title}
             className="w-full h-auto object-cover"
             onError={e => { e.target.src = 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=800&q=80'; }}
@@ -138,7 +138,7 @@ export default function BlogDetail() {
           ))}
 
           {/* Description image */}
-          {blog.descriptionImage && (
+          {blog.descriptionImage && blog.descriptionImage !== blog.blogImage && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -146,7 +146,7 @@ export default function BlogDetail() {
               className="my-8 rounded-2xl overflow-hidden border border-[#e2f4f2] shadow-sm"
             >
               <img
-                src={`${API_URL}/uploads/blogs/${blog.descriptionImage}`}
+                src={uploadUrl(blog.descriptionImage, 'blogs')}
                 alt="Illustration"
                 className="w-full h-auto object-cover"
               />

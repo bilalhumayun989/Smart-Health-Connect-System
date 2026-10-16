@@ -1,4 +1,4 @@
-import { API_URL } from '../../config/api';
+import { API_URL, uploadUrl } from '../../config/api';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -121,7 +121,7 @@ export default function BlogDetail() {
             className="rounded-[3rem] overflow-hidden shadow-2xl border-8 border-white group"
           >
             <img
-              src={`${API_URL}/uploads/blogs/${blog.blogImage}`}
+              src={uploadUrl(blog.blogImage, 'blogs')}
               alt={blog.title}
               className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-[2s]"
             />
@@ -147,7 +147,7 @@ export default function BlogDetail() {
             className="rounded-[3rem] overflow-hidden shadow-2xl border-8 border-white group p-4 bg-gray-50"
           >
             <img
-              src={`${API_URL}/uploads/blogs/${blog.descriptionImage}`}
+              src={uploadUrl(blog.descriptionImage, 'blogs')}
               alt="Supplementary visual"
               className="w-full h-auto object-cover rounded-[2rem] group-hover:scale-105 transition-transform duration-[2s]"
             />

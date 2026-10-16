@@ -1,4 +1,4 @@
-import { API_URL } from '../../config/api';
+import { API_URL, uploadUrl } from '../../config/api';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
@@ -11,15 +11,27 @@ export default function ShowBlog() {
   const [error, setError] = useState(null);
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
-    axios.get(`${API_URL}/api/blog/all`)
-      .then(r => { setBlogs(r.data); setLoading(false); })
-      .catch(() => { setError('Could not load publications.'); setLoading(false); });
-  }, []);
+    const controller = new AbortController();
+    setLoading(true);
+    setError(null);
+    axios.get(`${API_URL}/api/blog/all`, { signal: controller.signal, timeout: 15000 })
+      .then(({ data }) => {
+        if (!Array.isArray(data)) throw new Error('Invalid blog response');
+        setBlogs(data.filter(blog => blog && blog._id));
+      })
+      .catch(err => {
+        if (!axios.isCancel(err)) setError('Could not load publications. Check the server connection and retry.');
+      })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  }, [attempt]);
 
-  const filtered = blogs.filter(b =>
-    b.title.toLowerCase().includes(search.toLowerCase())
+  const filtered = blogs.filter(blog =>
+    [blog.title, blog.subheading, blog.description].some(value =>
+      String(value || '').toLowerCase().includes(search.trim().toLowerCase()))
   );
 
   if (loading) return (
@@ -31,8 +43,8 @@ export default function ShowBlog() {
 
   if (error) return (
     <div className="bg-white border border-[#e2f4f2] rounded-2xl p-12 text-center">
-      <p className="text-red-400 font-bold mb-4 text-sm">{error}</p>
-      <button onClick={() => window.location.reload()}
+      <p role="alert" className="text-red-400 font-bold mb-4 text-sm">{error}</p>
+      <button onClick={() => setAttempt(value => value + 1)}
         className="px-6 py-2.5 bg-[#0f766e] text-white rounded-xl text-xs font-black uppercase tracking-widest">
         Retry
       </button>
@@ -50,7 +62,7 @@ export default function ShowBlog() {
           <p className="text-gray-400 text-sm mt-1">Manage clinical insights and healthcare articles.</p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2 bg-white border border-[#e2f4f2] rounded-xl px-4 py-2.5 w-56 focus-within:border-[#0f766e] focus-within:ring-2 focus-within:ring-[#0f766e]/10 transition-all">
             <FaSearch className="text-gray-300 text-sm flex-shrink-0" />
             <input
@@ -74,7 +86,11 @@ export default function ShowBlog() {
       {filtered.length === 0 && (
         <div className="bg-white border border-[#e2f4f2] rounded-2xl p-16 text-center">
           <FaBlog className="mx-auto text-[#b2e0da] mb-4" size={40} />
-          <p className="text-gray-400 font-bold text-sm">No publications found.</p>
+          <p className="text-gray-400 font-bold text-sm">{blogs.length ? 'No posts match your search.' : 'No blog posts yet.'}</p>
+          <p className="mt-2 text-sm text-gray-500">{blogs.length ? 'Try a different search.' : 'Publish your first article to show it here and on the patient website.'}</p>
+          <button className="mt-5 font-bold text-[#0f766e] underline" onClick={() => blogs.length ? setSearch('') : navigate('/insert-blog')}>
+            {blogs.length ? 'Clear search' : 'Create a blog post'}
+          </button>
         </div>
       )}
 
@@ -87,19 +103,19 @@ export default function ShowBlog() {
             style={{ boxShadow: '0 2px 16px rgba(15,118,110,0.06)' }}
           >
             {/* Image */}
-            <div className="relative h-48 overflow-hidden flex-shrink-0">
+            <div className="relative h-48 overflow-hidden flex-shrink-0 bg-[#e8f8f6]">
               <img
-                src={`${API_URL}/uploads/blogs/${blog.blogImage}`}
+                src={uploadUrl(blog.blogImage, 'blogs') || undefined}
                 alt={blog.title}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                onError={e => { e.target.src = 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=400&q=80'; }}
+                onError={e => { e.currentTarget.style.display = 'none'; }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#0f172a]/40 to-transparent" />
               {/* Date badge */}
               <div className="absolute top-3 right-3 bg-white/90 backdrop-blur rounded-lg px-2.5 py-1.5 flex items-center gap-1.5">
                 <FaRegCalendarAlt size={9} className="text-[#0f766e]" />
                 <span className="text-[9px] font-black text-[#0f172a] uppercase tracking-wider">
-                  {new Date(blog.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                  {blog.createdAt && !Number.isNaN(new Date(blog.createdAt).getTime()) ? new Date(blog.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Article'}
                 </span>
               </div>
             </div>

@@ -1,4 +1,4 @@
-import { API_URL } from '../../config/api';
+import { API_URL, uploadUrl } from '../../config/api';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
@@ -87,7 +87,7 @@ export default function ShowBlog() {
               {/* Image */}
               <div className="relative h-48 overflow-hidden">
                 <img
-                  src={`${API_URL}/uploads/blogs/${blog.blogImage}`}
+                  src={uploadUrl(blog.blogImage, 'blogs')}
                   alt={blog.title}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   onError={e => { e.target.src = 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=400&q=80'; }}

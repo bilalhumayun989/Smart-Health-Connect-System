@@ -15,6 +15,7 @@ export default function InsertBlog() {
     descriptionImage: null,
   });
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -26,6 +27,8 @@ export default function InsertBlog() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (loading) return;
+    setError('');
     setLoading(true);
     const data = new FormData();
     data.append('title', formData.title);
@@ -36,11 +39,9 @@ export default function InsertBlog() {
 
     try {
       await axios.post(`${API_URL}/api/blog/insert-blog`, data);
-      alert('Publication established successfully!');
       navigate('/show-blog');
     } catch (err) {
-      console.error(err);
-      alert('Verification failed: Could not synchronize with the repository.');
+      setError(err.response?.data?.message || 'Could not publish the article. Check the server connection and try again.');
     } finally {
       setLoading(false);
     }
@@ -77,6 +78,7 @@ export default function InsertBlog() {
         className="glass-card rounded-[3rem] p-10 max-w-4xl mx-auto w-full"
       >
         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {error && <p role="alert" className="md:col-span-2 rounded-xl bg-red-50 p-4 text-sm text-red-700">{error}</p>}
           <div className="md:col-span-2 space-y-2">
             <label className="text-[10px] font-black text-[#123499] uppercase tracking-[0.2em] ml-2">Publication Title</label>
             <div className="relative group">
@@ -175,7 +177,7 @@ export default function InsertBlog() {
               {loading ? (
                 <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
               ) : (
-                <>Establish Publication <FaPlus size={12} /></>
+                <>Publish Article <FaPlus size={12} /></>
               )}
             </motion.button>
           </div>
